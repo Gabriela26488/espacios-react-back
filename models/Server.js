@@ -23,6 +23,8 @@ class Server {
     this.middlewares();
     
     this.initialSetup();
+
+    this.routes();
     
     this.listen();
 
@@ -47,7 +49,7 @@ class Server {
 
   // Metodo que carga las rutas
   routes() {
-    
+    this.app.use(this.path.auth, require("../routes/auth.routes"));
   }
 
   // metodo que arranca el servidor
