@@ -11,7 +11,7 @@ const validarDatos = (req) => {
   } else return null;
 };
 
-// duncion para validar si el id es un id correcto
+// funcion para validar si el id es un id correcto
 const validarId = (id) => {
   if (!objId.isValid(id)) {
     return false;

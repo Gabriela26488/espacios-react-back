@@ -16,6 +16,7 @@ class Server {
     this.path = {
       auth: "/api/auth",
       usuarios: "/api/usuarios",
+      espacios: "/api/espacios",
     };
 
     this.dataBase();
@@ -51,6 +52,7 @@ class Server {
   routes() {
     this.app.use(this.path.auth, require("../routes/auth.routes"));
     this.app.use(this.path.usuarios, require("../routes/usuarios.routes"));
+    this.app.use(this.path.espacios, require("../routes/espacios.routes"));
   }
 
   // metodo que arranca el servidor
