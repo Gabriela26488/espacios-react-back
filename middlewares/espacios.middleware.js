@@ -37,8 +37,7 @@ const validarCrearEspacio = [
 
   body('ubicacion')
 		.not().isEmpty().withMessage('Ubicacion es requrido').bail()
-		.exists().withMessage('Ubicacion es requrido').bail()
-		.isObject().withMessage('Ingresa una ubicación válida').bail(),
+		.exists().withMessage('Ubicacion es requrido').bail(),
 
   body('ubicacion.latitud')
 		.not().isEmpty().withMessage('Latitud es requrido').bail()

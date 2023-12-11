@@ -2,6 +2,7 @@ const { validationResult } = require("express-validator");
 const objId = require("mongoose").Types.ObjectId;
 const ac = require("../middlewares/roles");
 const Espacios = require("../models/Espacios");
+const Usuario = require("../models/Usuario");
 
 // funcion que valida si se encontraron errores en el express-validator
 const validarDatos = (req) => {
@@ -59,7 +60,11 @@ const crear = async (req, res) => {
     const validar = validarDatos(req);
     if (validar) return res.status(400).json(validar);
 
-    const nuevoEspacio = new Espacios(req.body);
+    const {ubicacion, ...datos} = req.body
+
+    datos.ubicacion = JSON.parse(ubicacion);
+
+    const nuevoEspacio = new Espacios(datos);
 
     await nuevoEspacio.save();
 
@@ -123,10 +128,81 @@ const eliminar = async (req, res) => {
   }
 };
 
+const reservar = async (req, res) => {
+  try {
+    // idValido recibe la validación del id
+    const idValido = validarId(req.params.id);
+    if (!idValido) return res.status(401).json({ msg: "El id es incorrecto" });
+
+    // busca el espacio segun el id
+    const espacio = await Espacios.findById(req.params.id);
+    // si no encuencuentra un espacio devuelve error
+    if (!espacio) return res.status(400).json({ msg: "Espacio no registrado" });
+
+    const datos = {
+      fecha: req.body.fecha,
+      hora: req.body.hora,
+      estaDisponible: false,
+      reservadoPor: req.user._id,
+    };
+
+    const disponibilidad = [...espacio.disponibilidad, datos];
+
+    const actualizado = await Espacios.findByIdAndUpdate(
+      req.params.id,
+      { disponibilidad },
+      {
+        new: true,
+      }
+    );
+
+    return res.status(200).json({ msg: "Espacio actualizado", actualizado });
+  } catch (err) {
+    console.log(err);
+    res.status(400).json(err);
+  }
+};
+
+const reservados = async (req, res) => {
+  try {
+    const permiso = ac.can(req.user.rol).updateAny("espacio");
+    if (!permiso.granted) {
+      return res.status(401).json("Unauthorized");
+    }
+    const espacios = await Espacios.find();
+    const usuarios = await Usuario.find();
+    let lista = [];
+    espacios.map((espacio) => {
+      if (espacio.disponibilidad.length > 0) {
+        espacio.disponibilidad.forEach((i) => {
+          usuarios.forEach((usuario) => {
+            if (usuario._id.toString() == i.reservadoPor.toString()) {
+              lista.push({
+                idUsuario: usuario._id,
+                idEspacio: espacio._id,
+                nombreEspacio: espacio.nombre,
+                nombreUsuario: usuario.nombres,
+                correoUsuario: usuario.correo,
+                fecha: i.fecha,
+                hora: i.hora,
+              });
+            }
+          });
+        });
+      }
+    });
+    return res.status(200).json(lista);
+  } catch (err) {
+    console.log(err);
+    res.status(400).json(err);
+  }
+};
 module.exports = {
   listaEspacios,
   mostrarEspacio,
   crear,
   editar,
   eliminar,
+  reservar,
+  reservados,
 };
